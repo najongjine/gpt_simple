@@ -15,7 +15,16 @@ class GPTConfig:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 config = GPTConfig()
+"""
+Head → MultiHeadAttention, FeedForward → Block → GPT
+작은 부품(Head)을 만들어서 → 묶고(Block) → 최종 조립(GPT)하는 과정
+"""
+"""
+Head (가장 작은 부품)
+역할: 눈알 하나입니다.
 
+실제로 수학 계산(행렬 곱하기)을 하는 녀석입니다. 여기서 "과거만 볼 수 있게 가리는(Masking)" 작업을 합니다.
+"""
 # 2. 간단한 Causal Self-Attention (GPT의 핵심: 미래 정보 가리기)
 class Head(nn.Module):
     """ 하나의 Self-Attention Head """
@@ -43,6 +52,12 @@ class Head(nn.Module):
         out = wei @ v 
         return out
 
+"""
+MultiHeadAttention (부품 조립 1)
+역할: 눈알 여러 개 묶음입니다.
+
+눈이 하나면 불안하니까, Head를 4개(설정값) 만들어서 붙여놓은 껍데기입니다.
+"""
 class MultiHeadAttention(nn.Module):
     """ 여러 개의 Head를 병렬로 실행 """
     def __init__(self, num_heads, head_size):
@@ -55,6 +70,13 @@ class MultiHeadAttention(nn.Module):
         out = self.proj(out)
         return out
 
+"""
+FeedForward (부품 조립 2)
+역할: 계산기입니다.
+
+눈으로 본 정보를 가지고 머리를 굴리는 곳입니다. 단순한 신경망(MLP)입니다.
+정보를 4배로 뻥튀기해서 자세히 본 다음(Linear), 필요 없는 건 버리고(ReLU), 다시 원래대로 압축(Linear)해서 돌려주는 계산기
+"""
 class FeedForward(nn.Module):
     """ 토큰 별로 정보를 섞어주는 단순한 MLP """
     def __init__(self, n_embd):
@@ -69,6 +91,12 @@ class FeedForward(nn.Module):
         return self.net(x)
 
 # 3. 트랜스포머 블록
+"""
+Block (중간 조립)
+역할: 지능 한 층입니다.
+
+위에서 만든 MultiHeadAttention(눈)과 FeedForward(머리)를 한 세트로 묶습니다. 이 블록을 4층, 12층, 96층 쌓으면 GPT가 됩니다.
+"""
 class Block(nn.Module):
     def __init__(self, n_embd, n_head):
         super().__init__()
@@ -85,6 +113,12 @@ class Block(nn.Module):
         return x
 
 # 4. 전체 GPT 모델
+"""
+GPT (최종 완제품)
+역할: 로봇 본체입니다.
+
+입력을 받아서 -> Block들을 통과시키고 -> 최종 결과를 내뱉는 전체 과정을 지휘합니다.
+"""
 class GPT(nn.Module):
     def __init__(self):
         super().__init__()
