@@ -1,0 +1,40 @@
+graph TD
+    %% 스타일 정의
+    style Input fill:#f9f,stroke:#333,stroke-width:2px,color:black
+    style Embedding fill:#bbf,stroke:#333,stroke-width:2px,color:black
+    style Block fill:#dfd,stroke:#333,stroke-width:2px,color:black
+    style Attention fill:#fff,stroke:#333,stroke-dasharray: 5 5,color:black
+    style Output fill:#fdd,stroke:#333,stroke-width:2px,color:black
+
+    %% 1. 입력 단계
+    Input(1. 입력: 'Hello') --> Tokenizer["토크나이저 (tiktoken)<br/>문자를 숫자로 변환"]
+    Tokenizer --> IDs["정수 인덱스 [15496, ...]"]
+
+    %% 2. 임베딩 단계
+    IDs --> Emb["2. 임베딩 (Embedding)<br/>숫자를 의미있는 벡터(좌표)로 변환"]
+    Emb --> Pos["+ 포지셔널 임베딩<br/>(단어의 위치 정보 추가)"]
+    
+    %% 3. 트랜스포머 블록 (반복)
+    Pos --> B_Start("3. 트랜스포머 블록 (Block) 진입")
+    
+    subgraph "Block (생각하는 단계)"
+        direction TB
+        B_Start --> LN1[LayerNorm]
+        LN1 --> Att["Multi-Head Attention<br/>(문맥 파악: 과거 정보 취합)"]
+        Att --> Add1((+))
+        B_Start --> Add1
+        
+        Add1 --> LN2[LayerNorm]
+        LN2 --> FF["FeedForward (MLP)<br/>(정보 섞기 & 추론)"]
+        FF --> Add2((+))
+        Add1 --> Add2
+    end
+    
+    %% 4. 출력 단계
+    Add2 --> LN_Final[최종 LayerNorm]
+    LN_Final --> Head["4. 출력 헤드 (Linear)<br/>단어장 크기로 확장"]
+    Head --> Softmax["Softmax (확률 계산)"]
+    Softmax --> Predict("다음 단어 예측: 'World'")
+
+    %% 루프
+    Predict -- "예측한 단어를 뒤에 붙여서 다시 입력" --> Input
