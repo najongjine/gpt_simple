@@ -47,6 +47,7 @@ V: "오래 산다는 뜻" (만수무강의 내용물) → 내용물이 다름!
     """
     def __init__(self, head_size):
         super().__init__()
+        # 토큰 하나당 Q 백터,K 백터,V 백터 
         # "나는 이런 특성을 가진 단어야." (다른 단어들이 가진 꼬리표)
         self.key = nn.Linear(config.n_embd, head_size, bias=False)
         # "나랑 관련된 단어가 누구니?" (현재 단어가 던지는 질문)
@@ -100,6 +101,14 @@ C (Channel, 정보의 깊이): "단어 하나를 숫자 몇 개로 표현해?"
         
         # [중요] 마스킹: 현재보다 미래의 위치는 -inf로 채워서 확률을 0으로 만듦
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
+        """
+        점수를 백분율(%)로 바꾸기
+아까 계산한 점수(wei)는 10점, 500점, -99점 등 제멋대로입니다. 이걸 **확률(총합 100%)**로 싹 정리합니다.
+
+전: A단어(100점), B단어(10점)
+
+후(Softmax): A단어(90%), B단어(10%)
+        """
         wei = F.softmax(wei, dim=-1)
         
         v = self.value(x)
