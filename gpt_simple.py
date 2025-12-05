@@ -27,17 +27,71 @@ Head (가장 작은 부품)
 """
 # 2. 간단한 Causal Self-Attention (GPT의 핵심: 미래 정보 가리기)
 class Head(nn.Module):
-    """ 하나의 Self-Attention Head """
+    """
+      하나의 Self-Attention Head 
+**'느금마' (토큰 1)**가 기계에 들어갑니다.
+
+Q: "나랑 어울리는 애 누구?" (느금마의 질문)
+
+K: "#사람 #대상" (느금마의 이름표)
+
+V: "엄마 정보" (느금마의 내용물)
+
+**'만수무강' (토큰 2)**이 똑같은 기계에 들어갑니다.
+
+Q: "누가 오래 살아?" (만수무강의 질문) → 질문 내용이 다름!
+
+K: "#상태 #축복" (만수무강의 이름표) → 이름표가 다름!
+
+V: "오래 산다는 뜻" (만수무강의 내용물) → 내용물이 다름!
+    """
     def __init__(self, head_size):
         super().__init__()
+        # "나는 이런 특성을 가진 단어야." (다른 단어들이 가진 꼬리표)
         self.key = nn.Linear(config.n_embd, head_size, bias=False)
+        # "나랑 관련된 단어가 누구니?" (현재 단어가 던지는 질문)
         self.query = nn.Linear(config.n_embd, head_size, bias=False)
+        # "나의 실제 의미는 이거야." (결과값으로 줄 정보)
         self.value = nn.Linear(config.n_embd, head_size, bias=False)
         # 미래의 토큰을 보지 못하게 하는 마스크 (Lower Triangular Matrix)
         self.register_buffer('tril', torch.tril(torch.ones(config.block_size, config.block_size)))
 
     def forward(self, x):
+        """
+1. B, T, C가 뭐냐? (입력 데이터의 신상정보)
+x.shape는 지금 들어온 데이터 덩어리의 크기를 말합니다.
+
+B (Batch Size, 배치 크기): "한 번에 몇 문장 처리해?"
+
+예: 4문장을 동시에 공부 중이면 B=4.
+
+T (Time step, 문장 길이): "한 문장에 단어가 몇 개야?"
+
+예: "느금마 만수무강"이면 단어가 2개니까 T=2.
+
+C (Channel, 정보의 깊이): "단어 하나를 숫자 몇 개로 표현해?"
+
+예: 단어 하나를 숫자 64개로 자세히 설명하고 있으면 C=64. (n_embd)
+
+즉, x는 (4개 문장, 각 2단어, 단어당 64개 숫자)로 된 거대한 숫자 덩어리입니다.
+        """
         B, T, C = x.shape
+        """
+2. k = self.key(x)와 q = self.query(x)는 뭐하는 짓?
+여기서 아까 말한 **"변환 기계"**가 작동합니다. **C(64)**만큼 뚱뚱했던 정보를 **head_size(16)**만큼 압축해서 **특수한 목적(Q, K)**으로 바꿉니다.
+
+입력 (x): 그냥 "만수무강"이라는 일반적인 정보 (크기: 64)
+
+⬇ self.key (기계) 통과 ⬇
+
+출력 (k): "만수무강"의 이름표(Key) 정보 (크기: 16)
+
+결과적으로 모양이 이렇게 바뀝니다:
+
+전: (B, T, 64) → (문장 4개, 길이 2, 뚱뚱한 일반 정보)
+
+후: (B, T, 16) → (문장 4개, 길이 2, 압축된 이름표 정보)
+        """
         k = self.key(x)   # (B, T, head_size)
         q = self.query(x) # (B, T, head_size)
         
