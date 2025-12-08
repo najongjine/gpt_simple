@@ -122,7 +122,13 @@ MultiHeadAttention (부품 조립 1)
 눈이 하나면 불안하니까, Head를 4개(설정값) 만들어서 붙여놓은 껍데기입니다.
 """
 class MultiHeadAttention(nn.Module):
-    """ 여러 개의 Head를 병렬로 실행 """
+    """ 여러 개의 Head를 병렬로 실행 
+Head들: 각자 흩어져서 조사함 (개인 플레이)
+
+Concat: 조사한 거 책상 위에 모아둠
+
+self.proj: "자, 다들 모여봐. 이거 무슨 뜻인지 결론 내자." (팀 미팅 & 보고서 작성)
+    """
     def __init__(self, num_heads, head_size):
         super().__init__()
         self.heads = nn.ModuleList([Head(head_size) for _ in range(num_heads)])
