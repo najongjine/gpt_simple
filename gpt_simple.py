@@ -145,14 +145,19 @@ FeedForward (부품 조립 2)
 
 눈으로 본 정보를 가지고 머리를 굴리는 곳입니다. 단순한 신경망(MLP)입니다.
 정보를 4배로 뻥튀기해서 자세히 본 다음(Linear), 필요 없는 건 버리고(ReLU), 다시 원래대로 압축(Linear)해서 돌려주는 계산기
+
+이 "뻥튀기 후 압축" 과정이 사실 딥러닝에서 지능이 생기는 핵심 마법
 """
 class FeedForward(nn.Module):
     """ 토큰 별로 정보를 섞어주는 단순한 MLP """
     def __init__(self, n_embd):
         super().__init__()
         self.net = nn.Sequential(
+            # 원래 정보량(n_embd)을 4배(4 * n_embd)로 뻥튀기해서 아주 자세하게 늘어놓습니다. (예: 4차원을 16차원으로 늘렸다는얘기) 
             nn.Linear(n_embd, 4 * n_embd),
+            # 중요한 정보(양수)는 살리고, 필요 없거나 방해되는 정보(음수)는 과감하게 0으로 지워버립니다. 
             nn.ReLU(),
+            # 4배로 늘렸던 정보를 다시 원래 크기로 압축해서 다음 단계로 넘겨줍니다.
             nn.Linear(4 * n_embd, n_embd),
         )
 
@@ -170,14 +175,16 @@ class Block(nn.Module):
     def __init__(self, n_embd, n_head):
         super().__init__()
         head_size = n_embd // n_head
-        self.sa = MultiHeadAttention(n_head, head_size) # Self-Attention
-        self.ffwd = FeedForward(n_embd)                 # Feed-Forward
-        self.ln1 = nn.LayerNorm(n_embd)
+        self.sa = MultiHeadAttention(n_head, head_size) # Self-Attention. (질문) 주변 친구들(다른 단어들)에게 관련 정보를 물어봅니다.
+        self.ffwd = FeedForward(n_embd)                 # Feed-Forward. (숙고) 아까 배운 내용을 혼자 곰곰이 생각해서 결론을 냅니다. (뻥튀기 후 압축)
+        self.ln1 = nn.LayerNorm(n_embd) # (심호흡) 일단 흥분한 상태를 가라앉히고(정규화) 차분해집니다.
         self.ln2 = nn.LayerNorm(n_embd)
 
     def forward(self, x):
         # Residual Connection (x + ...) 적용
+        # 친구들과 대화 (Attention). x = x + ... (기록) 내 노트에 친구들이 알려준 내용을 추가합니다. (내용이 풍부해짐)
         x = x + self.sa(self.ln1(x))
+        # 혼자 생각 정리 (FeedForward). x = x + ... (기록) 깨달은 내용을 내 노트에 다시 추가합니다.
         x = x + self.ffwd(self.ln2(x))
         return x
 
