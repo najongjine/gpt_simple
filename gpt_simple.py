@@ -198,32 +198,58 @@ GPT (최종 완제품)
 class GPT(nn.Module):
     def __init__(self):
         super().__init__()
-        # 토큰 임베딩 테이블
+        # 토큰 임베딩 테이블. (숫자 ID → vector정보 덩어리 변환기).
         self.token_embedding_table = nn.Embedding(config.vocab_size, config.n_embd)
-        # 포지셔널 임베딩 테이블 (위치 정보)
+        # 포지셔널 임베딩 테이블 (위치 정보). (위치 번호표). 단어한테 **"너는 문장의 몇 번째 순서야"**라는 **위치 정보(명찰)**를 붙여주는 부품입니다.
         self.position_embedding_table = nn.Embedding(config.block_size, config.n_embd)
-        # 트랜스포머 블록들
+        # 트랜스포머 블록들. (생각하는 뇌). 여기가 핵심입니다. 아까 만든 Block(어텐션 + 피드포워드)을 n_layer(여기선 4개)만큼 층층이 쌓습니다.
         self.blocks = nn.Sequential(*[Block(config.n_embd, config.n_head) for _ in range(config.n_layer)])
-        # 최종 LayerNorm
+        # 최종 LayerNorm. (최종 정리 정돈). 뇌(Block)를 거치면서 데이터 값들이 너무 커지거나 들쑥날쑥해졌을 수 있습니다. 마지막으로 결과를 내보내기 전에 데이터를 깔끔하게 표준화(정규화) 시켜주는 필터입니다.
         self.ln_f = nn.LayerNorm(config.n_embd) 
-        # 최종 출력 헤드 (단어 예측)
+        # 최종 출력 헤드 (정답 발표기).  n_embd(64개짜리 숫자 덩어리)를 다시 vocab_size(50257개 단어장) 크기로 쫙 펼쳐서, "어떤 단어가 올 확률이 가장 높은지" 점수를 매깁니다.
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size)
 
     def forward(self, idx, targets=None):
         B, T = idx.shape
         
         # 1. 임베딩 계산
+        """
+상황: 지금 idx라는 숫자(단어 번호)들이 들어왔습니다.
+
+tok_emb: 숫자 번호를 **의미를 가진 벡터(숫자 뭉치)**로 바꿉니다. (예: 3번 -> [0.1, -0.5, ...]) "이건 사과라는 뜻이야."
+
+pos_emb: 위치 정보를 더해줍니다. "이건 문장의 맨 첫 번째 단어야."
+
+x = ...: 이 두 정보를 더해서 **"첫 번째 자리에 있는 사과"**라는 최종 정보를 만듭니다.
+        """
         tok_emb = self.token_embedding_table(idx) # (B, T, C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=config.device)) # (T, C)
         x = tok_emb + pos_emb # 토큰 정보 + 위치 정보
         
-        # 2. 블록 통과
+        # 2. 뇌 가동 (Blocks). "배운 걸 토대로 고민해 보자"
+        """
+self.blocks(x): 아까 만든 **4개의 지능 층(Layer)**을 통과시킵니다.
+
+과거의 단어들을 참고하고(Attention), 혼자 생각해서(FeedForward) 정보를 점점 구체화합니다.
+
+self.ln_f(x): 4번이나 고민하느라 데이터 값들이 너무 튀었을 수 있으니, 마지막으로 차분하게 **정돈(정규화)**합니다.
+        """
         x = self.blocks(x)
         x = self.ln_f(x)
         
         # 3. 로짓(Logits) 계산
+        """
+지금 x는 64개(n_embd)의 숫자로 된 추상적인 생각 덩어리입니다.
+
+이걸 다시 50,257개(vocab_size) 단어장 크기로 확 늘립니다.
+
+결과(logits): 50,257개의 단어 각각에 대해 **"이게 정답일 점수"**를 매긴 채점표입니다. (점수가 높을수록 그 단어가 나올 확률이 높음)
+        """
         logits = self.lm_head(x) # (B, T, vocab_size)
 
+        """
+        (중요) 채점 시간
+        """
         loss = None
         if targets is not None:
             B, T, C = logits.shape
