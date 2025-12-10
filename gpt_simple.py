@@ -248,7 +248,7 @@ self.ln_f(x): 4번이나 고민하느라 데이터 값들이 너무 튀었을 �
         logits = self.lm_head(x) # (B, T, vocab_size)
 
         """
-        (중요) 채점 시간
+        (중요) 채점 시간. 상황: 로봇이 예측한 값(logits)과 실제 정답(targets)이 같이 들어왔습니다.
         """
         loss = None
         if targets is not None:
