@@ -264,7 +264,7 @@ self.ln_f(x): 4번이나 고민하느라 데이터 값들이 너무 튀었을 �
         for _ in range(max_new_tokens):
             # 들어온 문맥을 block_size만큼 자르기 (너무 길면 에러남)
             idx_cond = idx[:, -config.block_size:]
-            # 예측
+            # 예측. GPT 클래스 안에 있는 forward 함수를 실행
             logits, _ = self(idx_cond)
             # 마지막 토큰에 대한 예측값만 가져오기
             logits = logits[:, -1, :] 
