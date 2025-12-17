@@ -98,3 +98,130 @@ A:=
 상태: [1, 3, 64] (크기는 그대로, 내용은 융합됨)
 
 결론: 완벽하게 이해하셨습니다. "64를 16짜리 4개로 쪼개서(Linear), 각자 계산하고(Attention), 다시 붙여서(Cat), 잘 비벼주는(Proj)" 과정입니다.
+
+\*\*\*\* Q:
+class Block(nn.Module):
+    def **init**(self, n_embd, n_head):
+        super().**init**()
+        head_size = n_embd // n_head
+        self.sa = MultiHeadAttention(n_head, head_size) # Self-Attention. (질문) 주변 친구들(다른 단어들)에게 관련 정보를 물어봅니다.
+        self.ffwd = FeedForward(n_embd)                 # Feed-Forward. (숙고) 아까 배운 내용을 혼자 곰곰이 생각해서 결론을 냅니다. (뻥튀기 후 압축)
+        self.ln1 = nn.LayerNorm(n_embd) # (심호흡) 일단 흥분한 상태를 가라앉히고(정규화) 차분해집니다.
+        self.ln2 = nn.LayerNorm(n_embd)
+
+def forward(self, x):
+        # Residual Connection (x + ...) 적용
+        # 친구들과 대화 (Attention). x = x + ... (기록) 내 노트에 친구들이 알려준 내용을 추가합니다. (내용이 풍부해짐)
+        x = x + self.sa(self.ln1(x))
+        # 혼자 생각 정리 (FeedForward). x = x + ... (기록) 깨달은 내용을 내 노트에 다시 추가합니다.
+        x = x + self.ffwd(self.ln2(x))
+        return x
+
+이게 MultiHeadAttention 에서 크기가 줄었다가 커지고, 그걸 그대로 ffw 한테 줘서 크기 늘렸다가 줄인거지?
+
+A:
+
+1. MultiHeadAttention: "줄이는 게 아니라 쪼개서 분업"
+   사용자님은 "줄었다가 커진다"고 느끼셨겠지만, 실제로는 **"팀별로 일을 나눠서(Divide) 처리하고 다시 모으는(Concat) 과정"**입니다.
+
+   입력 ($x$): 64개 정보
+
+   분배 (Split): 64개를 16개씩 4등분해서 4개의 Head(팀)에게 나눠줍니다.
+   Head 1: 16개 처리
+   Head 2: 16개 처리
+   Head 3: 16개 처리
+   Head 4: 16개 처리(여기서 각 Head 입장에선 정보가 64 $\to$ 16으로 줄어든 게 맞습니다!)
+
+   합체 (Concat): 각 팀이 처리한 결과(16개)를 다시 나란히 붙입니다.
+   $16 \times 4 = 64$개
+
+   뒷정리 (Projection): 합쳐진 64개 정보를 한 번 잘 섞어줍니다 (nn.Linear(64, 64)).
+   결과: 여전히 64개입니다.
+   요약: 전체 덩어리 크기는 계속 64를 유지합니다. (내부적으로만 쪼개질 뿐입니다.)
+
+2. 중간 과정: Residual Connection (이게 중요!)
+   코드에 x = x + ...라고 되어 있죠?
+   MultiHeadAttention을 거쳐 나온 결과물(새로운 정보)을, **원래 있던 정보($x$)에 "더하기(+)"**를 합니다.
+   의미: "원래 알고 있던 내용" + "방금 친구들한테 물어봐서 알게 된 내용"을 합쳐서 더 똑똑한 $x$가 됩니다.
+
+3. FeedForward: "진짜로 뻥튀기 후 압축"
+   이 부분은 사용자님이 말씀하신 게 정확합니다. 아까 그 똑똑해진 $x$(64개)가 들어옵니다.
+   입력: 64개
+   확장 (Linear): 64 $\to$ 256 (4배 뻥튀기, 생각 확장)
+   필터 (ReLU): 쓸모없는 생각 삭제
+   압축 (Linear): 256 $\to$ 64 (요약 정리)
+   결과: 다시 64개가 되어 나옵니다.
+   그리고 마지막으로 또 x = x + ...를 해서 원래 지식에 덧붙입니다.
+
+최종 정리 (3줄 요약)
+MultiHeadAttention: 64개를 4명이 16개씩 나눠서(병렬) 처리하고 다시 합쳐서 64로 만듦. (정보 교환)
+
+Residual (+): 기존 지식에 위에서 얻은 정보를 누적.
+
+FeedForward: 64개를 256으로 늘렸다가 고민하고 다시 64로 요약. (혼자 깊은 생각)
+그래서 블록 하나를 통과해도 데이터 크기는 처음부터 끝까지 64(n_embd)로 일정하게 유지됩니다. 덕분에 이 블록을 레고처럼 계속 위로 쌓을 수 있는 것입니다.
+
+\*\*\*\* Q:
+그러면, 뭘 곱해서 어떻게 줄인건지, 뭘 곱해서 어떻게 늘릴건지
+
+이런건 back propagation 이 담당한다?
+
+A:
+개발자(님): "야, 여기서 64개를 256개로 늘리는 판을 벌려!"라고 **판(구조)**만 짜줍니다. (nn.Linear)
+Back Propagation(역전파): "이 판에서 정답을 맞히려면 구체적으로 0.5를 곱해야 할지, -0.7을 곱해야 할지" **숫자(가중치)**를 찾아냅니다.
+
+1. 개발자(님)의 역할: 구조 설계
+   님은 nn.Linear(64, 256)라고 딱 한 줄 썼습니다. 이건 마치 이런 함수 껍데기를 만든 것과 같습니다.
+
+// 개발자가 한 일: 변수(w)가 들어갈 자리만 만들어둠 (값은 아직 모름)
+function expand(input) {
+let w = ???; // 아직 모름 (처음엔 랜덤)
+return input \* w;
+}
+
+2. 학습 전 (초기 상태)
+   처음에는 w가 랜덤이라서 GPT가 헛소리를 합니다.
+   입력: "사과는?"
+
+GPT(랜덤): "자동차!" (틀림)
+
+3. Back Propagation의 역할: 범인 색출과 교정
+   틀렸다는 걸 알게 되면, **역전파(Back Propagation)**라는 감사팀이 들이닥쳐서 역추적을 시작합니다.
+   감사팀: "야! 결과가 왜 '자동차'야? 누가 이렇게 계산했어?"
+   Layer 4: "제가 w에 5를 곱했는데요..."
+   감사팀: "미쳤어? 지금 '맛있다'가 나와야 하는데 5를 곱하면 어떡해? 너 숫자 좀 낮춰."
+   Layer 3: "저는 -2 곱했는데요..."
+   감사팀: "너는 좀 높여."
+   (여기선 예시로 정수로 나왔지만, 현실은 matrix 로 되있다.)
+
+\***\* Q:
+class GPT(nn.Module):
+    def **init**(self):
+        super().**init**()
+        # 토큰 임베딩 테이블. (숫자 ID → vector정보 덩어리 변환기).
+        self.token_embedding_table = nn.Embedding(config.vocab_size, config.n_embd)
+        # 포지셔널 임베딩 테이블 (위치 정보). (위치 번호표). 단어한테 **"너는 문장의 몇 번째 순서야"**라는 **위치 정보(명찰)\*_를 붙여주는 부품입니다.
+        self.position_embedding_table = nn.Embedding(config.block_size, config.n_embd)
+        # 트랜스포머 블록들. (생각하는 뇌). 여기가 핵심입니다. 아까 만든 Block(어텐션 + 피드포워드)을 n_layer(여기선 4개)만큼 층층이 쌓습니다.
+        self.blocks = nn.Sequential(_[Block(config.n_embd, config.n_head) for _ in range(config.n_layer)])
+        # 최종 LayerNorm. (최종 정리 정돈). 뇌(Block)를 거치면서 데이터 값들이 너무 커지거나 들쑥날쑥해졌을 수 있습니다. 마지막으로 결과를 내보내기 전에 데이터를 깔끔하게 표준화(정규화) 시켜주는 필터입니다.
+        self.ln_f = nn.LayerNorm(config.n_embd)
+        # 최종 출력 헤드 (정답 발표기).  n_embd(64개짜리 숫자 덩어리)를 다시 vocab_size(50257개 단어장) 크기로 쫙 펼쳐서, "어떤 단어가 올 확률이 가장 높은지" 점수를 매깁니다.
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size)
+
+x = self.blocks(x)
+
+여기서
+x = self.blocks(x)
+계산결과의 x 는
+[1,n,64] 야? 아니면 [z,n,64] 즉 여러개야?
+
+A:
+정답은 [z, n, 64] (여러 개) 입니다. 즉, 질문하신 표현대로라면 [Batch_Size, Sequence_Length, n_embd] 형태가 유지됩니다.
+
+def forward(self, idx, targets=None):
+B, T = idx.shape # <--- 여기서 결정됩니다!
+
+B (Batch Size): 님이 질문하신 **z**에 해당합니다. "한 번에 몇 개의 문장을 넣었냐"입니다. (Config 설정상 4지만, 넣기에 따라 1이 될 수도, 100이 될 수도 있습니다.)
+T (Time step): 님이 질문하신 **n**에 해당합니다. "문장의 길이(단어 개수)"입니다.
+C (Channel): 임베딩 차원(64)입니다.
