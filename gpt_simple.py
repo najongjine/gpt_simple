@@ -223,8 +223,10 @@ pos_emb: 위치 정보를 더해줍니다. "이건 문장의 맨 첫 번째 단�
 x = ...: 이 두 정보를 더해서 **"첫 번째 자리에 있는 사과"**라는 최종 정보를 만듭니다.
         """
         tok_emb = self.token_embedding_table(idx) # (B, T, C)
+        print(f"\n GPT tok_emb: {tok_emb.shape}")
         pos_emb = self.position_embedding_table(torch.arange(T, device=config.device)) # (T, C)
         x = tok_emb + pos_emb # 토큰 정보 + 위치 정보
+        print(f"\n GPT x = tok_emb + pos_emb: {x.shape}")
         
         # 2. 뇌 가동 (Blocks). "배운 걸 토대로 고민해 보자"
         """
@@ -246,6 +248,7 @@ self.ln_f(x): 4번이나 고민하느라 데이터 값들이 너무 튀었을 �
 결과(logits): 50,257개의 단어 각각에 대해 **"이게 정답일 점수"**를 매긴 채점표입니다. (점수가 높을수록 그 단어가 나올 확률이 높음)
         """
         logits = self.lm_head(x) # (B, T, vocab_size)
+        print(f"\n GPT logits: {logits.shape}")
 
         """
         (중요) 채점 시간. 상황: 로봇이 예측한 값(logits)과 실제 정답(targets)이 같이 들어왔습니다.
@@ -285,8 +288,12 @@ print(f"모델 파라미터 수: {sum(p.numel() for p in model.parameters())/1e6
 
 # 2. 테스트용 입력 (안녕하세요! 같은 느낌의 영어)
 input_text = "Hello, I am a robot."
+# tokens : [15496, 11, 314, 716, 257, 9379, 13]
 tokens = enc.encode(input_text)
+print(f"\n tokens : {tokens}")
+# tokens_tensor : torch.Size([1, 7])
 tokens_tensor = torch.tensor(tokens, dtype=torch.long, device=config.device).unsqueeze(0) # (1, T)
+print(f"\n tokens_tensor : {tokens_tensor.shape}")
 
 # 3. 생성 테스트 (학습 전이라 헛소리 출력함)
 model.eval()
