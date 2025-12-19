@@ -232,7 +232,7 @@ x = ...: 이 두 정보를 더해서 **"첫 번째 자리에 있는 사과"**라
         """
 self.blocks(x): 아까 만든 **4개의 지능 층(Layer)**을 통과시킵니다.
 
-과거의 단어들을 참고하고(Attention), 혼자 생각해서(FeedForward) 정보를 점점 구체화합니다.
+과거의 단어들을 참고하고(Attention), 혼자 생각해서(FeedForward) 정보를 점점 구체화합니다. 단어 임베딩으로 시작하지만, 단어 임베딩 + 위치 임베딩 -> 크기 줄였다가 붙였다가 클렸다가 복구하는 과정에서 각 토큰들의 임베딩을 그냥 토큰 임베딩을 넘어서 의미를 찾습니다.
 
 self.ln_f(x): 4번이나 고민하느라 데이터 값들이 너무 튀었을 수 있으니, 마지막으로 차분하게 **정돈(정규화)**합니다.
         """
@@ -267,11 +267,14 @@ self.ln_f(x): 4번이나 고민하느라 데이터 값들이 너무 튀었을 �
         for _ in range(max_new_tokens):
             # 들어온 문맥을 block_size만큼 자르기 (너무 길면 에러남)
             idx_cond = idx[:, -config.block_size:]
-            # 예측. GPT 클래스 안에 있는 forward 함수를 실행
+            # 예측. GPT 클래스 안에 있는 forward 함수를 실행    torch.Size([1, 26, 50257])
             logits, _ = self(idx_cond)
-            # 마지막 토큰에 대한 예측값만 가져오기
+            print(f" generate logts : ",logits.shape)
+            # 마지막 토큰에 대한 예측값만 가져오기    torch.Size([1, 50257])
             logits = logits[:, -1, :] 
+            print(f" generate logits[:, -1, :]  : ",logits.shape)
             probs = F.softmax(logits, dim=-1)
+            print(f" generate probs : ",probs)
             # 확률 분포에 따라 다음 토큰 샘플링
             idx_next = torch.multinomial(probs, num_samples=1)
             # 정답을 현재 시퀀스에 붙이기
