@@ -2,7 +2,7 @@ import os
 import tiktoken
 import numpy as np
 
-input_file_path = 'input.txt' # 형이 구한 3GB 소설 파일 경로
+input_file_path = 'TinyStories-Korean-train.txt' # 형이 구한 3GB 소설 파일 경로
 train_file_path = 'train.bin'
 val_file_path = 'val.bin'
 
@@ -32,7 +32,7 @@ def process_data():
             if not text_chunk:
                 break
             # 토큰화해서 리스트에 추가
-            token_list.extend(enc.encode(text_chunk))
+            token_list.extend(enc.encode(text_chunk, allowed_special="all"))
             print(f"현재 수집된 토큰 수: {len(token_list):,}")
     
     total_tokens = len(token_list)

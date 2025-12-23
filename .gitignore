@@ -12,3 +12,5 @@ my_local_models/
 model_save/
 
 TinyStories-Korean-train.txt
+train.bin
+val.bin
