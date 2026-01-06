@@ -12,7 +12,7 @@ from gpt_simple import GPT, GPTConfig
 
 # --- 설정 ---
 # 학습 횟수 (원리를 배우는 용도니 짧게 잡았습니다. 제대로 하려면 5000번 이상 추천)
-max_iters = 20000  
+max_iters =5000  
 eval_interval = 100  # 100번마다 얼마나 잘하고 있나 중간 점검
 learning_rate = 3e-4 # 학습 속도 (너무 크면 체하고, 너무 작으면 더딤)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
