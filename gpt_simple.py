@@ -12,6 +12,7 @@ class GPTConfig:
     n_embd = 768        # 임베딩 차원 (기존 384 -> 768)
     dropout = 0.1       # 과적합 방지
     batch_size = 12     # 한 번에 학습할 문제 수 (메모리 16GB 꽉 채움)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 config = GPTConfig()
 """
