@@ -5,13 +5,14 @@ import tiktoken
 
 # 1. 하이퍼파라미터 설정
 class GPTConfig:
-    block_size = 1024   # 한 번에 보는 문맥 길이 (기존 256 -> 1024로 대폭 증가)
-    vocab_size = 100277 # tiktoken(cl100k_base)의 단어 개수
-    n_layer = 12        # 층 개수 (기존 6 -> 12)
-    n_head = 12         # 어텐션 헤드 개수 (기존 6 -> 12)
-    n_embd = 768        # 임베딩 차원 (기존 384 -> 768)
-    dropout = 0.1       # 과적합 방지
-    batch_size = 12     # 한 번에 학습할 문제 수 (메모리 16GB 꽉 채움)
+    block_size = 256      # 한 번에 볼 문맥의 길이 (Context Window)
+    batch_size = 32      # 배치의 크기
+    n_embd = 384          # 임베딩 차원 (벡터 크기)
+    n_head = 6           # 어텐션 헤드 개수
+    n_layer = 6          # 트랜스포머 블록(레이어) 개수
+    dropout = 0.2        # 드롭아웃 비율
+    vocab_size = 50257   # GPT-2 기준 vocab size (tiktoken 사용 시)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 config = GPTConfig()
 """
