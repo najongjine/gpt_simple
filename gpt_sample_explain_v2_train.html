@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPT 작동 원리 및 gpt_simple.py 훈련 가이드 🚀</title>
+    <!-- 폰트 로드 -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <!-- 스타일 정의 -->
+    <style>
+      :root {
+        --primary: #4f46e5;
+        --beginner: #10b981;
+        --intermediate: #f59e0b;
+        --advanced: #ef4444;
+        --bg-color: #f9fafb;
+        --text-color: #1f2937;
+        --card-bg: #ffffff;
+      }
+
+      body {
+        font-family: "Noto Sans KR", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.7;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 2.5em;
+        text-align: center;
+        color: var(--primary);
+        margin-bottom: 10px;
+        font-weight: 900;
+      }
+
+      h2 {
+        border-bottom: 3px solid #e5e7eb;
+        padding-bottom: 5px;
+        margin-top: 40px;
+      }
+
+      .subtitle {
+        text-align: center;
+        font-size: 1.2em;
+        color: #6b7280;
+        margin-bottom: 50px;
+      }
+
+      /* 챕터 박스 스타일 */
+      .card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 40px;
+        transition: transform 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+      }
+
+      /* 레벨 표시기 */
+      .badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: bold;
+        color: white;
+        margin-bottom: 15px;
+      }
+      .badge.beginner {
+        background-color: var(--beginner);
+      }
+      .badge.intermediate {
+        background-color: var(--intermediate);
+      }
+      .badge.advanced {
+        background-color: var(--advanced);
+      }
+
+      /* 난이도별 왼쪽 테두리 색상 */
+      .level-beginner {
+        border-left: 6px solid var(--beginner);
+      }
+      .level-intermediate {
+        border-left: 6px solid var(--intermediate);
+      }
+      .level-advanced {
+        border-left: 6px solid var(--advanced);
+      }
+
+      /* 귀여운 설명 박스 */
+      .note-box {
+        background-color: #eef2ff;
+        border-left: 4px solid var(--primary);
+        padding: 15px;
+        border-radius: 0 8px 8px 0;
+        margin: 15px 0;
+        font-weight: 500;
+      }
+
+      /* 코드 블럭 */
+      pre {
+        background-color: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 0.95em;
+      }
+      code .python-keyword {
+        color: #569cd6;
+      }
+      code .python-string {
+        color: #ce9178;
+      }
+      code .python-comment {
+        color: #6a9955;
+      }
+      code .python-func {
+        color: #dcdcaa;
+      }
+
+      /* 다이어그램 (Mermaid) 및 이미지 공간 */
+      .diagram-container {
+        text-align: center;
+        margin: 30px 0;
+        overflow-x: auto;
+      }
+
+      /* 테이블 스타일 */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+      th,
+      td {
+        border: 1px solid #e5e7eb;
+        padding: 12px;
+        text-align: left;
+      }
+      th {
+        background-color: #f3f4f6;
+        font-weight: bold;
+      }
+
+      .emoji-art {
+        font-size: 3rem;
+        text-align: center;
+        margin: 20px 0;
+      }
+      .highlight {
+        background-color: #fef08a;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-weight: bold;
+        color: #854d0e;
+      }
+    </style>
+
+    <!-- Mermaid.js 다이어그램 라이브러리 추가 -->
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "default" });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧠 GPT의 뇌구조와 학습 원리 (Zero to Hero)</h1>
+      <p class="subtitle">
+        인공지능이 뭔지 1도 모르는 분들부터, 개발자까지 모두 이해하는 마법의
+        교재✨<br /><b>gpt_simple.py 완전 정복기</b>
+      </p>
+
+      <!-- STEP 1 -->
+      <div class="card level-beginner">
+        <span class="badge beginner">Lv.1 유치원생 모드</span>
+        <h2>1. GPT는 구체적으로 무슨 일을 하는 애벌레일까요? 🐛</h2>
+
+        <div class="emoji-art">👀 ➡️ 🍎</div>
+
+        <p>
+          어려운 말 다 빼고 딱 하나만 기억하세요.
+          <b>GPT는 "눈치 빠른 글자 맞추기 앵무새"</b>입니다.
+        </p>
+        <p>친구가 여러분에게 이렇게 말한다고 상상해보세요.</p>
+        <div class="note-box">
+          "너무 배가 고파서 식당에 밥을 먹으러..." <br />
+          자, 다음 단어는 무엇일까요?
+        </div>
+        <p>당연히 <b>"갔어"</b> 겠죠? GPT도 똑같습니다!</p>
+        <ol>
+          <li>지금까지 나온 단어들을 쭉 읽는다.</li>
+          <li>그 다음에 올 확률이 가장 높은 단어를 무당처럼 때려 맞춘다.</li>
+          <li>
+            이 글자 맞추기 게임을 끊임없이 반복해서 우리가 볼 땐 똑똑하게
+            대화하는 것처럼 보이게 한다!
+          </li>
+        </ol>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="card level-beginner">
+        <span class="badge beginner">Lv.2 초등학생 모드</span>
+        <h2>2. 숫자로만 생각하는 바보 컴퓨터 (토큰과 임베딩) 🧮</h2>
+
+        <p>
+          그런데 문제가 있습니다. 컴퓨터는 "사과", "바나나" 같은 한글이나 영어를
+          전혀 모릅니다. <strong>오직 숫자(0과 1)만 알죠.</strong><br />
+          그래서 우리는 인간의 단어를 번호판(숫자)으로 바꿔서 컴퓨터에게 줘야
+          합니다. 이걸 <b>토큰화(Tokenization)</b>라고 합니다.
+        </p>
+
+        <table>
+          <tr>
+            <th>사람의 말 (Text)</th>
+            <th>➡️</th>
+            <th>컴퓨터가 보는 단어장 번호 (Tokens)</th>
+          </tr>
+          <tr>
+            <td>"Hello, I am a robot."</td>
+            <td>➡️</td>
+            <td>
+              <span class="highlight">[15496, 11, 314, 716, 257, 10700]</span>
+            </td>
+          </tr>
+        </table>
+
+        <div class="diagram-container">
+          <div class="mermaid">
+            graph LR A[문장<br />"Hello"] -->|사전 뒤지기| B[단어의 번호<br />15496]
+            B -->|뜻을 좌표로 변경| C[임베딩<br />(0.2, -0.4, ... 768개)]
+          </div>
+        </div>
+        <p>
+          단어를 숫자로 바꾼 후, 그
+          <strong
+            >숫자의 의미를 엄청나게 긴 좌표(768개)로 풀어 설명해줍니다</strong
+          >. 이걸 세상 사람들은 <b>임베딩(Embedding)</b>이라고 부릅니다.
+          (사과=[빨갛다:0.9, 과일이다:0.8, 딱딱하다:0.3...])
+        </p>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="card level-intermediate">
+        <span class="badge intermediate">Lv.3 중/고등학생 모드</span>
+        <h2>3. 문맥을 기가 막히게 파악하는 방법! "어텐션(Attention)" 📡</h2>
+
+        <p>
+          한국어는 동음이의어가 많죠. <b>"배가 고파서 배를 타며 배를 먹었다"</b
+          ><br />
+          여기서 '배'가 사람 몸인지, 타는 배인지 과일인지 컴퓨터가 어떻게
+          알까요?
+        </p>
+
+        <p>
+          바로 여기서 <b>어텐션(Attention)</b>이라는 마법이 등장합니다!<br />
+          어텐션은 문장 속 단어들이 서로
+          <strong>"너 나랑 얼마나 관련 있니?"</strong> 하고 소개팅을 하는
+          과정입니다.
+        </p>
+
+        <div class="note-box">
+          <b>Self-Attention:</b><br />
+          "먹었다"라는 단어는 앞에 있는 "배(과일)"를 엄청 강하게 쳐다봅니다.<br />
+          "타며"라는 단어는 앞에 있는 "배(선박)"를 강하게 쳐다보죠!<br />
+          이 시선 교환을 통해 단어의 '진짜 뜻'을 깨닫게 됩니다.
+        </div>
+
+        <p>
+          그리고 <code>MultiHeadAttention</code>은 이런 소개팅을 여러 개의
+          조(Head)로 나눠서 동시에 진행하는 겁니다! 하나는 문법을 보고, 하나는
+          감정을 보고, 하나는 맥락을 봅니다.
+        </p>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="card level-advanced">
+        <span class="badge advanced">Lv.4 대학생/전공자 모드</span>
+        <h2>4. 훈련(Training)은 어떻게 일어날까? 🏋️‍♂️ (GPT의 모의고사)</h2>
+
+        <p>
+          자, 이제 제일 중요한 <strong>학습(Training)의 흐름</strong>입니다.
+          아까 앵무새 이야기로 돌아가볼까요?
+        </p>
+
+        <div
+          class="diagram-container"
+          style="background: #fff; padding: 20px; border-radius: 10px"
+        >
+          <div class="mermaid">
+            sequenceDiagram participant User as 문제집(입력) participant GPT as
+            우리 앵무새(GPT) participant Loss as 채점관(Loss) User->>GPT: "안녕,
+            나는" [1, 2] 다음 글자는? GPT->>GPT: 열심히 계산중... GPT-->>Loss:
+            "음.. 확률을 볼 때 '사과다'[3] 아니예요?" User->>Loss: 정답은
+            '사람이다'[4] 였습니다! Loss->>Loss: ❌ 틀렸네! 오차(Cross Entropy)
+            계산 Loss-->>GPT: 너 100점 만점에 10점이야! (Loss 값 발생) Note over
+            GPT, Loss: 🔥 역전파 (Backpropagation) 🔥<br />GPT머릿속 신경망
+            수치를 수정해서 <br />다음엔 '사람이다'가 나오게 뇌를 개조함
+          </div>
+        </div>
+
+        <p>
+          위의 그림처럼, 우리는 GPT에게 정답지가 있는 수십억 개의 문서를 주고,
+          계속 다음 글자를 맞추게 시킵니다.<br />
+          틀리면 혼내고 <strong>(Loss 계산)</strong>, 스스로 머릿속 공식을
+          수정하게 만듭니다 <strong>(Backpropagation)</strong>.<br />
+          이걸 수천만 번 반복하면, 결국 세상의 모든 지식을 암기한 천재가
+          탄생합니다!
+        </p>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="card level-advanced">
+        <span class="badge advanced" style="background-color: #ff5722; color:white;">Lv.5 진짜 실전 모드 (야간 유치원 🧸 + 컴퓨터 공학 🖥️)</span>
+        <h2>5. <code>gpt_simple.py</code> 텐서(Tensor)의 흐름과 연산의 진짜 의미 💻</h2>
+        <p>
+          이번에는 파이썬 코드 몇 줄 떨어뜨려 놓고 끝내지 않습니다.<br>
+          각 부분이 <b>현실 세계에서 무슨 행동(야간 유치원 비유)</b>을 뜻하는지, 그리고 <b>컴퓨터 공학 관점(자료구조, 행렬곱)</b>에서는 어떻게 맞물려 돌아가는지 낱낱이 파헤칩니다!<br>
+          설명 기준 기호: <code>B</code> (Batch Size, 배치 크기), <code>T</code> (Time Step / Sequence Length, 문장 길이), <code>C</code> (Channels / Embedding Dimension, 임베딩 차원)
+        </p>
+
+        <!-- 0. 스펙 설정 -->
+        <h3>🔹 0. 하이퍼파라미터 (GPTConfig)</h3>
+        
+        <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #e91e63;">
+          🧸 <b>[야간 유치원 비유] 교실 규칙 정하기</b><br>
+          야간 유치원에 반을 새로 엽니다. "우리 반 아이들은 한 번에 최대 512단어까지만 기억할 수 있어(<code>block_size</code>). 그리고 머릿속에 아는 단어 수는 10만 개야(<code>vocab_size</code>). 생각은 12번 깊게 할 거고(<code>n_layer</code>), 한 번에 12가지 방향(문법, 감정 등)으로 동시에 생각할 거야(<code>n_head</code>)."
+        </div>
+        
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3;">
+          🖥️ <b>[컴퓨터 공학 매칭] 하이퍼파라미터 튜닝 (GPU 메모리 설계)</b><br>
+          네트워크를 메모리에 올릴 때 <b>텐서(Tensor)의 차원(Shape)</b>을 고정하는 상수(Constant) 선언부입니다. 여기서 선언된 숫자들이 아래 나오는 모든 행렬 크기를 결정하며 시스템 연산량(VRAM)과 직결됩니다.
+        </div>
+        
+        <pre><code><span class="python-keyword">class</span> <span class="python-func">GPTConfig</span>:
+    block_size = <span class="python-string">512</span>      <span class="python-comment"># T: RNN이나 Transformer가 역전파를 수행할 최대 문장 길이 제한 (시야각 한계)</span>
+    vocab_size = <span class="python-string">100277</span>   <span class="python-comment"># V: 최종 출력층(Linear)에서 확률을 계산할 클래스 표본의 수 (Softmax 결과 사이즈)</span>
+    n_layer = <span class="python-string">12</span>        <span class="python-comment"># L: 블록 단위 모듈을 스택처럼 쌓을 깊이. 깊을수록 복잡한 추론력 확보.</span>
+    n_head = <span class="python-string">12</span>         <span class="python-comment"># 병렬 연산을 위한 텐서 분할 개수. (Multi-Head Attention용)</span>
+    n_embd = <span class="python-string">768</span>        <span class="python-comment"># C: 하나의 단어를 기계가 고차원 공간에 뿌릴 때 사용할 좌표(실수 변수)의 개수 </span>
+    dropout = <span class="python-string">0.1</span>       <span class="python-comment"># 학습 과정에서 10%의 노드를 끄고 학습시켜, 특정 데이터만 달달 외우는 방지 기법</span>
+    batch_size = <span class="python-string">8</span>        <span class="python-comment"># B: 8개의 독립된 문장을 거대한 행렬 하나로 구겨 넣어서 GPU 병렬 연산 효율을 높임</span></code></pre>
+
+        <!-- 1. Head -->
+        <hr style="margin: 40px 0; border: 1px dashed #ccc;">
+        <h3>🔹 1. Head (가장 작은 어텐션 단위: 나와 너의 관계성 파악)</h3>
+        
+        <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #e91e63;">
+          🧸 <b>[야간 유치원 비유] 나랑 짝꿍 찾기! (Q, K, V)</b><br>
+          유치원생 단어들이 원 안에 모여 앉아있습니다. 서로 친해지기 위해 각자 역할을 나눕니다.<br>
+          단어A: "난 '사과'야! 난 달콤하고 빨간 걸 뜻해." (<b>내 정체성 명찰 = Key</b>)<br>
+          단어B: "난 '먹었다'야! 난 과일이나 음식 단어를 찾고 있어." (<b>내가 찾는 대상 조건 = Query</b>)<br>
+          단어B가 조건을 외치면, 단어A의 '사과' 명찰과 찰떡같이 맞아떨어집니다! 호감도(<b>가중치 점수</b>)가 확 올라가죠.<br>
+          서로 친해지면 단어A는 자기가 가진 "과일의 느낌(<b>가치: Value</b>)"을 떼어내서 단어B에게 줍니다.<br>
+          단, 아직 말하지 않은 미래의 단어와는 눈이 마주치지 못하게 안대(<b>tril Mask</b>)를 씌워 반칙을 막습니다!
+        </div>
+
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3;">
+          🖥️ <b>[컴퓨터 공학 매칭] Self-Attention과 내적(Dot Product) 행렬 연산</b><br>
+          Transformer 구조의 핵심입니다. <b>자연어는 단어 순서보단 문맥(Context) 조합이 필수적입니다.</b> 각 단어 좌표를 가중치(W)에 통과시켜 Query, Key 행렬을 얻고 서로 내적 시킵니다.<br>
+          벡터 공간 내에서 두 성분이 일치할수록 값이 커지며(유사성 도출), 이를 <b>Softmax</b>를 통해 총합이 1.0이 되는 확률(분배 가중치)로 만들고 그 비율만큼 Value 행렬을 곱합니다. 이것이 <b>동적 메모리 조회(Addressing) 메커니즘</b>입니다.<br>
+          특히 <b>"말은 과거에서 미래로 흐른다(Autoregressive)"</b>는 물리 법칙을 지키기 위해 우상단 행렬을 <code>-inf</code>로 날리는 <b>Masking</b> 배열 처리가 필수적입니다.
+        </div>
+        <pre><code><span class="python-keyword">class</span> <span class="python-func">Head</span>(nn.Module):
+    <span class="python-keyword">def</span> <span class="python-func">__init__</span>(self, head_size):
+        ...
+        <span class="python-comment"># [초기화 1] 단어가 가진 원래 지식(n_embd)을 '내 정체성 명찰(Key)' 크기(head_size)로 압축해주는 마법의 렌즈입니다.</span>
+        <span class="python-comment"># [Input] x: (배치 B, 길이 T, 기본단어크기 n_embd)  --->  [Output] 반환될 변환기: (B, T, head_size) 크기로 출력 예정</span>
+        self.key = nn.Linear(config.n_embd, head_size, bias=<span class="python-keyword">False</span>)
+        
+        <span class="python-comment"># [초기화 2] "내가 찾고 싶은 짝꿍(Query)"의 조건을 담아내는 마법의 렌즈입니다.</span>
+        <span class="python-comment"># [Input] x: (배치 B, 길이 T, 기본단어크기 n_embd)  --->  [Output] 반환될 변환기: (B, T, head_size) 크기로 출력 예정</span>
+        self.query = nn.Linear(config.n_embd, head_size, bias=<span class="python-keyword">False</span>)
+        
+        <span class="python-comment"># [초기화 3] 친해진 상대에게 넘겨줄 "나의 알짜배기 정보(Value)"를 만드는 마법의 렌즈입니다.</span>
+        <span class="python-comment"># [Input] x: (배치 B, 길이 T, 기본단어크기 n_embd)  --->  [Output] 반환될 변환기: (B, T, head_size) 크기로 출력 예정</span>
+        self.value = nn.Linear(config.n_embd, head_size, bias=<span class="python-keyword">False</span>)
+        
+        <span class="python-comment"># [초기화 4] 미래 컨닝 방지용 '가림막(Mask)'을 만듭니다. 왼쪽 아래만 1이고, 오른쪽 위(미래)는 0인 직각삼각형 모양이에요.</span>
+        <span class="python-comment"># [Input] block_size (예: 512)  --->  [Output] tril 배열: (block_size, block_size) 2차원 정사각형</span>
+        self.register_buffer(<span class="python-string">'tril'</span>, torch.tril(torch.ones(config.block_size, config.block_size)))
+
+    <span class="python-keyword">def</span> <span class="python-func">forward</span>(self, x):
+        <span class="python-comment"># [텐서 차원의 이해 (어디서 왔고 무엇을 의미하는가?)]</span>
+        <span class="python-comment"># B (Batch Size, 모둠 수): 한 번에 훈련/처리할 "문장 세트의 개수" (보통 config.batch_size = 8)</span>
+        <span class="python-comment"># T (Time/Sequence Length, 타임아웃): 하나의 문장 안에 들어있는 "단어 토큰의 총 개수" (보통 config.block_size = 512)</span>
+        <span class="python-comment"># C (Channel/Embedding, 지식의 깊이): 각 단어 하나가 품고 있는 의미 "정보 벡터의 원소 개수" (보통 config.n_embd = 768)</span>
+        B, T, C = x.shape  <span class="python-comment"># [Input] x: (B, T, C)</span>
+        
+        <span class="python-comment"># 1. 🔍 [질문과 답변 세팅] 입력 x를 각각 Query(찾는 조건)와 Key(내 명찰)로 변환합니다.</span>
+        k = self.key(x)     <span class="python-comment"># [Input] x: (B, T, C)  --->  [Output] k: (B, T, head_size)</span>
+        q = self.query(x)   <span class="python-comment"># [Input] x: (B, T, C)  --->  [Output] q: (B, T, head_size)</span>
+        
+        <span class="python-comment"># 2. 💘 [호감도(Score) 계산] "내가 찾는 조건(Q)" 이랑 "남들의 명찰(K)"을 매칭(행렬곱 `@`)시켜 점수를 매깁니다.</span>
+        <span class="python-comment"># 계산 원리: Q (B, T, head_size) 곱하기 K를 뒤집은 행렬 (B, head_size, T)</span>
+        <span class="python-comment"># (머리가 커질수록 점수가 폭주해서 Softmax가 망가지는 걸 막기 위해 차원수(head_size)의 루트값 C**-0.5 로 나눠 진정시킵니다)</span>
+        wei = q @ k.transpose(<span class="python-string">-2</span>, <span class="python-string">-1</span>) * (C**<span class="python-string">-0.5</span>) 
+        <span class="python-comment"># [Output] wei: (B, T, T)  <-- 단어 T개가 서로를 얼마나 좋아하는지 적힌 T x T 크기의 점수판 완성이요!</span>
+        
+        <span class="python-comment"># 3. 🙈 [미래 컨닝 막기] 뒤에 나올 단어(아직 모름)와 미리 썸타면 반칙이죠? 가림막(tril)에서 0인 부분을 끝없는 절망(-inf)으로 덮습니다.</span>
+        wei = wei.masked_fill(self.tril[:T, :T] == <span class="python-string">0</span>, float(<span class="python-string">'-inf'</span>))
+        <span class="python-comment"># [Input] wei: (B, T, T)  --->  [Output] 덮어씌워진 wei: (B, T, T) (우상단 쪽이 모두 -inf로 덮임)</span>
+        
+        <span class="python-comment"># 4. 🧮 [점수를 100% 비율로 깔끔하게] -inf는 0%로 소멸시키고, 나머지 점수들은 합쳐서 100%(1.0)가 되도록 예쁘게 확률로 쪼갭니다.</span>
+        wei = F.softmax(wei, dim=<span class="python-string">-1</span>)
+        <span class="python-comment"># [Input] 쌩 점수판 wei: (B, T, T)  --->  [Output] 정규화된 wei: (B, T, T) (각 줄을 다 더하면 무조건 1.0이 되는 최적의 조합 비율!)</span>
+        
+        <span class="python-comment"># 5. 🎁 [정보 조공 타임] 비율(wei)대로 짝꿍의 আসল 알짜배기 정보(Value)를 흡수합니다.</span>
+        v = self.value(x)   <span class="python-comment"># [Input] x: (B, T, C)  ---> [Output] v: (B, T, head_size) (넘겨줄 예쁜 포장 상자)</span>
+        
+        <span class="python-comment"># (가중치 비율판) (B, T, T) 행렬 곱하기 (핵심 정보) (B, T, head_size)</span>
+        out = wei @ v       
+        <span class="python-comment"># [Output] out: (B, T, head_size)  <-- 다른 단어들의 문맥 정보와 "합체 완료"된 진화형 문맥 벡터 도출!</span>
+        
+        <span class="python-keyword">return</span> out</code></pre>
+
+        <!-- 2. MultiHeadAttention -->
+        <hr style="margin: 40px 0; border: 1px dashed #ccc;">
+        <h3>🔹 2. MultiHeadAttention (Attention 모듈의 병렬 집합)</h3>
+        
+        <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #e91e63;">
+          🧸 <b>[야간 유치원 비유] 12개의 방울 달린 안경</b><br>
+          단어들이 짝꿍을 찾을 때 "문법" 기준으로만 짝을 찾으면 정보가 빈약하겠죠? 그래서 유치원생에게 12가지 색안경(<code>Head</code>)을 씌웁니다.<br>
+          어떤 안경을 쓰면 "감정"에 반응하고, 다른 안경은 "주어-동사"에만 반응합니다. 12개의 각기 다른 기준으로 각자 친구를 찾은 다음, 맨 마지막에 <b>이어 붙여서(cat) 원장의 종합 보고서로 통째로 제출</b>합니다.
+        </div>
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3;">
+          🖥️ <b>[컴퓨터 공학 매칭] 파라미터 분산과 다중 피처 앙상블 조합 (Ensemble)</b><br>
+          거대한 Attention 계산을 통째로 수행하면 가중치 표현력이 하나의 특징 공간으로 제한됩니다. 따라서 원래 차원을 `n_head` 개수로 나눈 뒤(예: 768차원을 64차원 벡터 12개로 분리), 독자적인 W행렬에서 각각 병렬 도출(연산 최적화)시켜 다채로운 <b>특징 표상(Feature Representation)</b>을 동시에 잡아냅니다. 그 뒤 메모리에선 단순히 마지막 차원을 연장(`torch.cat`)시켜 사이즈를 원래 차원(C)으로 복구시킵니다.
+        </div>
+        <pre><code><span class="python-keyword">class</span> <span class="python-func">MultiHeadAttention</span>(nn.Module):
+    <span class="python-keyword">def</span> <span class="python-func">__init__</span>(self, num_heads, head_size):
+        ...
+        <span class="python-comment"># Iterator를 사용해 작은 Head(64 크기) 모듈을 num_heads(12번) 만큼 생성 후 리스트에 주입.</span>
+        self.heads = nn.ModuleList([Head(head_size) <span class="python-keyword">for</span> _ <span class="python-keyword">in</span> range(num_heads)])
+        <span class="python-comment"># 각 헤드가 내놓은 결과를 찢어진 종이 붙이듯 하나로 섞어주는 선형 투영(Projection) 레이어.</span>
+        self.proj = nn.Linear(config.n_embd, config.n_embd)
+
+    <span class="python-keyword">def</span> <span class="python-func">forward</span>(self, x):
+        <span class="python-comment"># 12개의 Heads로부터 나온 [B, T, 64] 크기의 텐서 12개를</span>
+        <span class="python-comment"># 마지막 3번째 차원(dim=-1) 방향으로 다닥다닥 이어 붙임(cat).</span>
+        <span class="python-comment"># 64 짜리가 가로로 12번 이어붙으니 64*12 = 768! -> 처음 입력때와 똑같은 차원 [B, T, 768] 원상복구.</span>
+        out = torch.cat([h(x) <span class="python-keyword">for</span> h <span class="python-keyword">in</span> self.heads], dim=<span class="python-string">-1</span>)
+        
+        <span class="python-comment"># 이어 붙이기만 해서는 정보가 단절되어 있어 Linear (행렬 [C, C] 곱)를 거쳐 텐서 축을 하나로 믹싱함</span>
+        out = self.proj(out)
+        <span class="python-keyword">return</span> out</code></pre>
+
+        <!-- 3. FeedForward -->
+        <hr style="margin: 40px 0; border: 1px dashed #ccc;">
+        <h3>🔹 3. FeedForward (깊이 곱씹어 생각하기)</h3>
+        
+        <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #e91e63;">
+          🧸 <b>[야간 유치원 비유] 나만의 텐트 속 명상 시간</b><br>
+          강당에서 12개의 안경을 쓰고 친구들과 소통을 끝마쳤다면, 이번엔 각자 자기 방(텐트)으로 돌아갑니다. 다른 아이들과의 대화는 끊고, 오로지 앞서 얻은 힌트들을 내 머릿속에서 혼자 <b>크게 4배 부풀려서 깊게 생각(상상)</b>합니다. 그중 <b>쓸모없는 잡생각은 망각해 버리고(ReLU)</b>, 알짜배기 깨달음만 챙겨서 다시 방 밖으로 나옵니다.
+        </div>
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3;">
+          🖥️ <b>[컴퓨터 공학 매칭] 비선형 다층 퍼셉트론 공간 팽창 (Non-linear MLP Expansion)</b><br>
+          MHA 계층(앞의 과정)이 <b>시간 통신망(Communication Across Tokens)</b>이라면, FFN(현재 과정)은 토큰 혼자 특성 벡터 영역을 재가공하는 <b>단일 노드 연산망(Computation Per Token)</b> 역할입니다. 차원을 일시적으로 보통 4배 증폭(768 -> 3072)시켜 비정형 데이터 매핑 수용력(Capacity)을 극대화시킨 후, 0 이하 차원 값을 날려버리는 <code>ReLU</code> 활성 함수 스위치를 먹여 네트워크에 <b>비선형성(Non-linear)</b> 구조를 강제로 부여합니다. (이게 없다면 인공신경망 전체가 단순한 1차 방정식 그래프 모음집이 되어버려 복잡한 언어를 단 1%도 이해하지 못합니다.)
+        </div>
+
+        <pre><code><span class="python-keyword">class</span> <span class="python-func">FeedForward</span>(nn.Module):
+    <span class="python-keyword">def</span> <span class="python-func">__init__</span>(self, n_embd):
+        ...
+        self.net = nn.Sequential(
+            <span class="python-comment"># 1. 공간 팽창 연산: 입력 C를 4배(4*C) 로 확장시킴으로써 추론 가능한 파라미터 바다 생성 [B, T, 768] -> [B, T, 3072]</span>
+            nn.Linear(n_embd, <span class="python-string">4</span> * n_embd),
+            
+            <span class="python-comment"># 2. 비선형성 활성 함수: 곡선 논리를 만들어 줌. (배열 값 중 0 이하는 강제로 0으로 파괴)</span>
+            nn.ReLU(),
+            
+            <span class="python-comment"># 3. 투영/압축. 팽창된 공간에서 결론 도출이 끝난 핵심만 원래 C차원 생태계 규격으로 밀어넣음 [B, T, 3072] -> [B, T, 768]</span>
+            nn.Linear(<span class="python-string">4</span> * n_embd, n_embd),
+        )
+
+    <span class="python-keyword">def</span> <span class="python-func">forward</span>(self, x):
+        <span class="python-keyword">return</span> self.net(x)</code></pre>
+
+        <!-- 4. Block -->
+        <hr style="margin: 40px 0; border: 1px dashed #ccc;">
+        <h3>🔹 4. Block (거대한 기초 샌드위치 조립)</h3>
+        
+        <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #e91e63;">
+          🧸 <b>[야간 유치원 비유] 1층 샌드위치 완성! 그리고 우주최강 단기기억법</b><br>
+          유치원 일과는 [친구 파악하기(MHA)] -> [혼자 명상하기(FFWD)] 순서입니다. 그런데 이게 12번이나 반복되니까 아이들이 "내가 처음에 뭔 단어였지?" 까먹는 치매 현상이 옵니다. 그래서 "네 원래 정체는 이거였어!" 하고 옆으로 과거 모습을 슬쩍 컨닝 페이퍼마냥 전달해 줍니다. <b>(기존의 나 + 새롭게 배운 나 = 잔차 연결)</b> 이 마법 통로 덕분에 천재 유치원생이 만들어집니다.
+        </div>
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3;">
+          🖥️ <b>[컴퓨터 공학 매칭] Residual Connection과 Layer Normalization</b><br>
+          딥러닝 최고의 발명품, 기울기 소실(Vanishing Gradient) 억제 장치입니다. 역전파(Backpropagation) 시 깊은 층으로 미분값을 계속 곱해 내리다 보면 에러값이 0.000...으로 수렴해 학습이 정지되어 버리는데, 수식 <code>x = x + F(x)</code> 형태의 <b>잔차 연결법(Residual Method)</b>은 훼손되지 않은 원본 $x$를 그대로 미분 패스로 뚫어(미분치 +1 추가) 아무리 깊은 층이라도 초기 정보를 상실하지 않게 보호하는 고속도로입니다.<br>
+          추가로, 숫자 스케일이 제각각 커지며 치솟는 발산 현상을 방지하기 위해 각 토큰 벡터 요소를 평균 0, 분산 1 정규분포 구역 안으로 가둬 패킹하는 <code>LayerNorm</code>을 안전핀 목적으로 진입 직전마다 적용합니다(Pre-Norm 구조).
+        </div>
+        <pre><code><span class="python-keyword">class</span> <span class="python-func">Block</span>(nn.Module):
+    <span class="python-keyword">def</span> <span class="python-func">__init__</span>(self, n_embd, n_head):
+        ...
+        self.sa = MultiHeadAttention(n_head, head_size)  
+        self.ffwd = FeedForward(n_embd)                  
+        <span class="python-comment"># LayerNorm: 정규화. 각 토큰 축소 공간(C차원)마다 평균=0, 분산=1의 범위로 분포를 안정화 시킴</span>
+        self.ln1 = nn.LayerNorm(n_embd)                  
+        self.ln2 = nn.LayerNorm(n_embd)
+
+    <span class="python-keyword">def</span> <span class="python-func">forward</span>(self, x):
+        <span class="python-comment"># [Residual Connection 매직!] "x = x + ..."</span>
+        <span class="python-comment"># 그 자리에 감싸진 sa망엔 정규화(ln)를 씌운 값만 통과시켜 변화량 F(x)값만 얻고 원본 본체를 보존.</span>
+        x = x + self.sa(self.ln1(x))
+        <span class="python-comment"># Feedforward 단계 역시 원본을 기억하도록 잔차 구조 덧셈을 유지함.</span>
+        x = x + self.ffwd(self.ln2(x))
+        <span class="python-keyword">return</span> x</code></pre>
+
+        <!-- 5. GPT 최종 조립 -->
+        <hr style="margin: 40px 0; border: 1px dashed #ccc;">
+        <h3>🔹 5. GPT 종합 사령부 (전체 동작망 총괄)</h3>
+        
+        <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #e91e63;">
+          🧸 <b>[야간 유치원 비유] 유치원 풀 코스 학기 수료식</b><br>
+          오늘 막 들어온 신입생은 그저 "나는[123]", "사과[456]" 같은 책 카탈로그 번호표에 불과합니다. 원장님이 이 단순한 번호표들에 <b>'풍부한 의미 좌표(Token Emb)'</b>와 <b>'자리 순서표(Pos Emb)'</b>를 매달아 교실로 투입합니다.<br>
+          앞서 만든 거대한 Block 교실을 12번이나 통과하면 이 단어들은 <b>"문장의 흐름과 세상 이치를 전부 깨우친 철학자 단어들"</b>로 변신해 졸업합니다. 졸업 문에서 10만 단어 카탈로그를 펼친 뒤 "그래, 나 다음에는 누가 서는게 맞을까?" 투표판(Logits) 결과 점수를 내보고, 선생님이 준 정답지(Targets)와 비교해 "다 틀렸잖아!" 하고 벌점(Loss)을 매겨 다음날 더 똑똑하게 훈련되게 시스템을 굴립니다.
+        </div>
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3;">
+          🖥️ <b>[컴퓨터 공학 매칭] One-hot to Dense Vector화 변환, 그리고 Logits 분포 비용(Loss) 산출</b><br>
+          NLP 토큰들은 단순한 범주형 정수 Index 배열 데이터일 뿐 의미 연산이 불가능합니다. 배열 <code>[B, T]</code>을 `nn.Embedding` 룩업 테이블을 거쳐 의미 깊이를 지닌 실수 공간 좌표인 <code>[B, T, C]</code>(Dense Space Vector)로 스케일 업 해줍니다.<br>
+          Transformer 구조망은 RNN이나 CNN처럼 태생적 시계열 파악 장치가 없으므로 강제로 거리 함수 배열인 `Positional Embedding` 벡터를 더해(Add) 모델이 인덱스 위치를 인식하도록 하드코딩 합니다.<br>
+          최후방 출력 연결망(lm_head Linear)은 완성품 768 차원 벡터를 단어 전체 10만 개 클래스 도메인 구역으로 발산 매핑시켜 비통계형 확률 가중치인 <b>로짓(Logit)</b> 분포 구역을 형성합니다. 이를 실제 정답 레이블과 대차 대조하여 다항분류 체계의 베스트 프랙티스인 <code>CrossEntropyLoss</code> 목적함수 공식으로 비용 스칼라 오차값(`loss`)을 산출해냅니다.
+        </div>
+        <pre><code><span class="python-keyword">class</span> <span class="python-func">GPT</span>(nn.Module):
+    <span class="python-keyword">def</span> <span class="python-func">__init__</span>(self):
+        ...
+        <span class="python-comment"># 1. 의미 임베딩 테이블 (행렬: V x C) -> 들어온 인덱스 숫자에 맞춰 [B, T] -> [B, T, C]로 확장</span>
+        self.token_embedding_table = nn.Embedding(config.vocab_size, config.n_embd)
+        <span class="python-comment"># 2. 위치 임베딩 테이블 (행렬: T_max x C) -> 단순 배열인 텐서에 0~T번째라는 순서 개념을 더함</span>
+        self.position_embedding_table = nn.Embedding(config.block_size, config.n_embd)
+        
+        <span class="python-comment"># 3. Block 12개의 직렬 연결 사슬 구조 생성</span>
+        self.blocks = nn.Sequential(*[Block(config.n_embd, config.n_head) <span class="python-keyword">for</span> _ <span class="python-keyword">in</span> range(config.n_layer)])
+        
+        <span class="python-comment"># 4. 언어 모델링 출력층 변환 (Linear 파라미터 W: [C, V]) -> [B, T, C]차원을 [B, T, V]차원으로 변환</span>
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size)
+
+    <span class="python-keyword">def</span> <span class="python-func">forward</span>(self, idx, targets=<span class="python-keyword">None</span>):
+        ...
+        <span class="python-comment"># [B, T] 원시 정수 배열을 넣으면 -> Vector 좌표계 [B, T, C]로 뻥튀기 확장.</span>
+        tok_emb = self.token_embedding_table(idx)  
+        <span class="python-comment"># 0, 1, 2... T-1 까지 만들어진 연속 배열 상수 텐서를 넣으면 포지셔널 좌표계 [T, C]로 뻥튀기 확장.</span>
+        pos_emb = self.position_embedding_table(torch.arange(T, device=config.device))  
+        
+        <span class="python-comment"># 두 좌표계를 브로드캐스팅(Broadcasting, 자동 치환) 덧셈. [의미 벡터 + 위치 벡터] 융합 초기 노드 완성.</span>
+        x = tok_emb + pos_emb 
+        <span class="python-comment"># 12층 딥러닝 고속도로 연산 돌입. 잔차 연결 덕분에 [B, T, C] 차원은 소실되지 않음.</span>
+        x = self.blocks(x)       
+        <span class="python-comment"># 출력 차원 변환: 768짜리 내부 거대 특징 값들을 100277개의 실제 언어사전 단어 투표권 점수판 [B, T, Vocab_size] 로 스케일 역 변환 (Logits).</span>
+        logits = self.lm_head(x) 
+
+        <span class="python-comment"># -----[ 오차 최적화(Loss Validation) 훈련 모듈부 ]-----</span>
+        <span class="python-keyword">if</span> targets <span class="python-keyword">is not None</span>:
+            <span class="python-comment"># PyTorch 파이프라인 내부 `F.cross_entropy` API 연산 규약상, 배열 배치가 1차원이어야 하므로 조작합니다. </span>
+            <span class="python-comment"># 일자로 쭉 펴는 Flattening 진행: 배치 B와 문장 길이 T를 곱해서 하나로 나열합니다. -> 차원 [B*T, V_size] </span>
+            logits = logits.view(B*T, config.vocab_size)      
+            targets = targets.view(B*T) 
+            
+            <span class="python-comment"># 정답 자리 인덱스가 가진 로짓 확률을 얼마로 파악했는지 역추적하고, 마이너스 로그 우도를 이용해 거리 격차 스칼라 값(Loss)을 반환.</span>
+            loss = F.cross_entropy(logits, targets)
+
+        <span class="python-keyword">return</span> logits, loss</code></pre>
+
+        <!-- 6. Generate -->
+        <hr style="margin: 40px 0; border: 1px dashed #ccc;">
+        <h3>🔹 6. 텍스트 추론기 (Auto-Regressive 생성 엔진)</h3>
+        
+        <div style="background-color: #fce4ec; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #e91e63;">
+          🧸 <b>[야간 유치원 비유] 뒷말 이어 짓기 복불복 게임</b><br>
+          이미 선생님 역할을 끝낸 모델에게 "옛날 옛적에 호랑이가" 까지만 알려주고 단어 하나만 이어서 내뱉어보라고 시킵니다. AI가 10만 단어 점수판을 쓱 구경한 뒤 확률 상 제일 합리적이면서도 <b>나이브 주사위 복불복(무작위 섞기)</b>을 약간 가미해서 "담배를" 이란 단어를 로또 뽑듯 추출합니다! 그럼 기존 문장에 풀로 딱 붙여 "옛날 옛적에 호랑이가 담배를" 이라는 새 기본 문장을 만들죠. 이걸 지정한 턴 횟수만큼 끝도 없이 무한 도돌이표로 돌면 그럴싸한 소설 문서가 와르르 창작되는 겁니다!
+        </div>
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3;">
+          🖥️ <b>[컴퓨터 공학 매칭] 로짓 기반 범주 샘플링과 자기 회귀(Auto-Regressive) 스택 누적 연산</b><br>
+          Backpropagation 기능이 잠기는 순수 평가/추론(Inference) 단계 루프입니다. 앞서 들어가는 Prompt(Context)가 너무 늘어나면 모델의 수학적 메모리 용량을 벗어나므로 `block_size`까지만 배열의 꼬리를 도려내는 `Slicing Truncation` 슬라이싱 기능이 필수입니다.<br>
+          <b>다음 단어를 맞추는 엔진은 과거 값들이 어떻게 됐느냐(단어의 궤적) 모델 구조망이 알 바가 아닙니다.</b> 오직 가장 마지막 열의(인덱스 기준 `-1`) 분포 단 1개만 참조합니다.<br>
+          만약 가장 점수 높은 1등만 채택하는 그리디 서치(<code>argmax</code>) 알고리즘을 사용하면 단어가 기계적으로만 무한 반복되는 디제너레이션(Degeneration)이 터지므로, 수학의 <code>Softmax -> 확률 편차 조절 -> Multinomial(다항 카테고리 분포) 하 랜덤 샘플링 확률론</code>을 통해 생성 문자열에 생동감과 창의성을 주입합니다. 이후 생성해낸 신규 1차원 숫자 배열을 원본 리스트 차원 축(dim=1) 기준으로 `cat(결합)` 블록 연산 시켜 점점 배열 텐서 길이를 키워나가는 O(N) 반복 복잡도 아키텍처입니다.
+        </div>
+        <pre><code><span class="python-keyword">def</span> <span class="python-func">generate</span>(self, idx, max_new_tokens):
+    <span class="python-keyword">for</span> _ <span class="python-keyword">in</span> range(max_new_tokens):  
+        
+        <span class="python-comment"># 1. Truncation: Sequence(T) 배열 길이가 설정된 설계 스펙 한계 메모리 라인(512)을 넘어가면 배열 뒷부분만 슬라이싱.</span>
+        idx_cond = idx[:, -config.block_size:] <span class="python-comment"># 제한 [B, 512] 유지</span>
+        
+        <span class="python-comment"># 2. 신경망 Forward Propagation 모델 호출. 타겟 데이터가 없으니 loss는 버립니다.</span>
+        logits, _ = self(idx_cond)             <span class="python-comment"># [B, T, V_size] 전체 스코어 반환.</span>
+        
+        <span class="python-comment"># 3. 다음 단어 예측엔 오직 시퀀스의 가장 꼬리(마지막 인덱스인 -1) 로짓만 참조.</span>
+        logits = logits[:, <span class="python-string">-1</span>, :]                <span class="python-comment"># [B, 1차원 구조 축소 차원 V_size] </span>
+        
+        <span class="python-comment"># 4. 정규 확률 변환.</span>
+        probs = F.softmax(logits, dim=<span class="python-string">-1</span>)        <span class="python-comment"># [B, V_size]</span>
+        
+        <span class="python-comment"># 5. 확률 가중치 기반 다항 제비뽑기 시행 (원소 1개 추출). </span>
+        idx_next = torch.multinomial(probs, num_samples=<span class="python-string">1</span>) <span class="python-comment"># [B, 1]</span>
+        
+        <span class="python-comment"># 6. 원본 토큰 행렬에 뽑아낸 인덱스 1개를 시간 축 방향(오른쪽)으로 이어 붙입니다.</span>
+        idx = torch.cat((idx, idx_next), dim=<span class="python-string">1</span>)  
+        
+    <span class="python-keyword">return</span> idx</code></pre>
+      </div>
+      </div>
+
+      <!-- 결론 -->
+      <div style="text-align: center; margin-top: 50px">
+        <h2>🎉 축하합니다!</h2>
+        <p>
+          이제 여러분은 복잡한 수학 공식 없이도 인공지능이 어떻게 수많은 글을
+          이해하고 학습하는지 깨달았습니다.
+        </p>
+        <p>
+          <code>gpt_simple.py</code> 파일은 바로 이
+          <b>"토큰화 ➡️ 임베딩 ➡️ 어텐션 ➡️ 손실 계산 ➡️ 단어 예측"</b>의 모든
+          과정을 파이토치(PyTorch)라는 언어로 담아낸 마법의 주문서입니다!
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
