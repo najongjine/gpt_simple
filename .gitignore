@@ -14,3 +14,6 @@ model_save/
 TinyStories-Korean-train.txt
 train.bin
 val.bin
+
+custom_instruct_model.pth
+base_model_weights.pth
