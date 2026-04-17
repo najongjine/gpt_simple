@@ -5,13 +5,13 @@ import tiktoken
 
 # 1. 하이퍼파라미터 설정
 class GPTConfig:
-    block_size = 1024
+    block_size = 512
     vocab_size = 100277 # [중요] cl100k_base 토크나이저 크기
     n_layer = 12
     n_head = 12
     n_embd = 768
     dropout = 0.1
-    batch_size = 12
+    batch_size = 8
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 config = GPTConfig()

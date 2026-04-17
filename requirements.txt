@@ -1,1 +1,3 @@
 tiktoken
+datasets 
+huggingface_hub

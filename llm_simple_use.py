@@ -7,7 +7,7 @@ from gpt_simple import GPT, GPTConfig
 
 # --- 1. 설정 및 준비 ---
 # 모델 파일 경로
-model_path = 'model_weights.pth'
+model_path = 'base_model_weights.pth'
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 print(f"사용 장치: {device}")
@@ -39,7 +39,7 @@ print("로딩 완료! 대화를 시작합니다.")
 
 # --- 3. 대화 루프 ---
 # 토크나이저 준비 (GPT-2 기준)
-enc = tiktoken.get_encoding("gpt2")
+enc = tiktoken.get_encoding("cl100k_base")
 
 while True:
     # 사용자 입력 받기
