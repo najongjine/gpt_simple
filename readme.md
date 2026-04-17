@@ -10,3 +10,6 @@ nvidia-smi
 
 uv pip uninstall torch torchvision
 uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+
+google colab:
+https://colab.research.google.com/drive/19XYbgDLlHNpTj7bNiK-gcYwZAnMuq_qC?usp=sharing
